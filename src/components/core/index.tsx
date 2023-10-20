@@ -52,7 +52,7 @@ const order = [
 ]
 
 const Core: FunctionComponent = () => {
-  const [toggleState, setToggleState] = useState(3);
+  const [toggleState, setToggleState] = useState(4);
 
   const [filter, setFilter] = useState<CoreFilter>(
     teamTabs[toggleState] as CoreFilter

@@ -10,6 +10,7 @@ import withAdminRoute from "../../components/hoc/withAdminRoute";
 import Image from "next/image";
 import { MdDeleteOutline } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
+import { type JsonArray, type JsonValue } from "@prisma/client/runtime/library";
 
 type Events = {
   data: Event[];
@@ -45,7 +46,7 @@ interface FormData {
 const Event: NextPage = () => {
   const events = api.eventRouter.getAllEvents.useQuery();
   const addEvent = api.eventRouter.addEvent.useMutation();
-  const [image, setImage] = useState<File | null>(null);
+  const [images, setImages] = useState<FileList | null>(null);
   const [formdata, setFormData] = useState<FormData>({
     name: "",
     date: new Date(),
@@ -62,8 +63,16 @@ const Event: NextPage = () => {
     {
       const loadingToast = toast.loading("Please wait...");
       const formData = new FormData();
-      formData.append("file", image as File);
+      // formData.append("file", image as File);
+      if(images)
+        for (let i = 0; i < images?.length; i++){
+          const img = images[i];
+          if(img)
+            formData.append("file", img);
+        } 
       formData.append("upload_preset", "event-uploads");
+
+      // console.log(formData)
 
       const response: Response = await fetch(
         `${env.NEXT_PUBLIC_URL}/api/image/admin`,
@@ -82,14 +91,36 @@ const Event: NextPage = () => {
       const data: CloudinaryResponse =
         (await response.json()) as CloudinaryResponse;
 
+      console.log(data)
+      console.log("--------------------")
+      console.log(typeof( data.secure_url))
+      console.log(data.secure_url)
+
+      // const imagesJson = await response.json();
       try {
+        // const validated = addEventInput.parse({
+        //   name: formdata.name,
+        //   date: new Date(formdata.date),
+        //   attended: formdata.attended,
+        //   type: formdata.type,
+        //   image: "data.secure_url",
+        //   images: data.secure_url,
+        //   organizer: formdata.organizer,
+        //   description: formdata.description,
+        //   filter: formdata.filter,
+        // });
+        // console.log("-------********")
+        // console.log(validated)
+        // console.log("-------********")
+        // toast.dismiss(loadingToast);
         await addEvent.mutateAsync(
           {
             name: formdata.name,
             date: new Date(formdata.date),
             attended: formdata.attended,
             type: formdata.type,
-            image: data.secure_url,
+            image: "data.secure_url",
+            images: JSON.parse(data.secure_url) as string[],
             organizer: formdata.organizer,
             description: formdata.description,
             filter: formdata.filter,
@@ -112,6 +143,8 @@ const Event: NextPage = () => {
         );
       } catch (error) {
         toast.error("Error adding event");
+        console.log("#ERROR###########")
+        console.log(error)
       }
     }
   };
@@ -227,8 +260,8 @@ const Event: NextPage = () => {
               type="file"
               accept="image/*"
               placeholder="Image File"
-              onChange={(e) => setImage(e.target.files?.[0] as File)}
-              multiple={false}
+              onChange={(e) => setImages(e.target.files as FileList)}
+              multiple={true}
               required
             />
             <Button>Add Event</Button>
@@ -260,12 +293,24 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
   };
   // handle and verify the changed image
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    // handler if user selects other file than image
-    if (!file?.type.startsWith('image/')) {
-      toast.error("Please select an image file (e.g., PNG, JPG, JPEG).");
-      e.target.value = ""; // Reset the input value to clear the selected file
+    // const file = e.target.files?.[0];
+    // // handler if user selects other file than image
+    // if (!file?.type.startsWith('image/')) {
+    //   toast.error("Please select an image file (e.g., PNG, JPG, JPEG).");
+    //   e.target.value = ""; // Reset the input value to clear the selected file
+    //   return;
+    // }
+    const files = e.target.files;
+    if (!files || files.length === 0) 
       return;
+
+    for (let i = 0; i < files?.length; i++){
+      const file = files[i];
+      if (!file?.type.startsWith('image/')) {
+        toast.error("Please select an image file (e.g., PNG, JPG, JPEG).");
+        e.target.value = ""; // Reset the input value to clear the selected file
+        return;
+      }
     }
   };
   // update event handler
@@ -273,6 +318,8 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     let image = formData.get("imgurl") as string;
+    // let data: CloudinaryResponse="";
+    console.log("+++++++++"+image+"+++++++++++++++++")
     // only execute if the image is changed
     if(changeImage){
       const loadingToast = toast.loading("Please wait...");
@@ -303,10 +350,9 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
         return;
       }
 
-      const data: CloudinaryResponse =
-        (await response.json()) as CloudinaryResponse;
+      const data = (await response.json()) as CloudinaryResponse;
       image = data.secure_url;
-      
+      console.log("Chnaged:+++++"+image)
       toast.dismiss(loadingToast);
     }
 
@@ -329,7 +375,8 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
             date: date,
             attended: attended,
             type: type,
-            image: image,
+            image: "not needed",
+            images: JSON.parse(image) as string[],
             organizer: organizer,
             description: description,
             filter: filter,
@@ -354,6 +401,16 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
       }
     setChangeImage(false);
   };
+  // function to get first image
+  function getFirstImage(images:JsonValue): string {
+    if (Array.isArray(images)) {
+      const firstImage = images[0] as JsonArray;
+      if (typeof firstImage === "string") {
+        return firstImage;
+      }
+    }
+    return "";
+  }
 
   const deleteEvent = api.eventRouter.deleteEvent.useMutation();
   return (
@@ -456,7 +513,7 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
                             <h1 className="text-white leading-none">Do you want to update images too?</h1>
                           </div>
                         </div>
-                        <input type="text" name="imgurl" id="imgurl" hidden defaultValue={event.image}/>
+                        <input type="text" name="imgurl" id="imgurl" hidden defaultValue={JSON.stringify(event.images)}/>
                         <input
                             hidden={!changeImage}
                             required={changeImage}
@@ -465,7 +522,7 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
                             name="eimage"
                             accept="image/*"
                             placeholder="Image File"
-                            multiple={false}
+                            multiple={true}
                             onChange={(e)=>handleImageChange(e)}
                           />
                           <Button>Update Event</Button>
@@ -473,7 +530,7 @@ const EventList: React.FC<EventListProps> = ({ events, filter }) => {
                       </form>
                   </FormModal>
                   <Image 
-                    src={event.image}
+                    src={getFirstImage(event.images as JsonValue)}
                     alt={event.name}
                     width={150}
                     height={150}

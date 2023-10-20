@@ -2,7 +2,7 @@ import { z } from "zod";
 import { addEventInput, editEventInput, getEventsInput } from "../../../types";
 
 import { createTRPCRouter, publicProcedure ,adminProcedure} from "../trpc";
-import { deleteImage } from "../../../utils/cloudinary";
+import { deleteListImage } from "../../../utils/cloudinary";
 
 export const eventRouter = createTRPCRouter({
   getEvents: publicProcedure
@@ -37,7 +37,9 @@ export const eventRouter = createTRPCRouter({
             date: input.date,
             attended: input.attended,
             type: input.type,
-            image: input.image,
+            // image: input.image,
+            image: "not needed",
+            images: input?.images,
             organizer: input.organizer,
             description: input.description,
             filter: input.filter,
@@ -57,8 +59,8 @@ export const eventRouter = createTRPCRouter({
           });
           if (!existingEvent)
             throw new Error("Event not found");
-          if (existingEvent.image != input.image)
-            await deleteImage(existingEvent.image).catch((err) => { console.log(err) });
+          if (existingEvent.images != input.images)
+            await deleteListImage(existingEvent.images as string[]).catch((err) => { console.log(err) });
           
           return await ctx.prisma.event.update({
             where: { id: input.id },
@@ -68,6 +70,7 @@ export const eventRouter = createTRPCRouter({
               attended: input.attended,
               type: input.type,
               image: input.image,
+              images: input?.images,
               organizer: input.organizer,
               description: input.description,
               filter:input.filter,
@@ -86,9 +89,12 @@ export const eventRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const event = await ctx.prisma.event.findFirst({ where: { id: input.id } })
-        event && await deleteImage(event.image).catch((err) => { console.log(err) })
+        // const event = await ctx.prisma.event.findFirst({ where: { id: input.id } })
+        // event && await deleteImage(event.image).catch((err) => { console.log(err) })
         
+        const event = await ctx.prisma.event.findFirst({ where: { id: input.id } })
+        event && await deleteListImage(event.images as string[]).catch((err) => { console.log(err) })
+
         return await ctx.prisma.event.delete({
           where: {
             id: input.id,

@@ -35,14 +35,33 @@ export default async function handler(
     )
       throw "Field upload_preset not found";
 
-    if (files == undefined || files[0] === undefined) throw "No file uploaded";
+    console.log("Backend: "); 
+    console.log(files);
+    // if (files == undefined || files[0] === undefined) throw "No file uploaded";
+    if (files == undefined) throw "No file uploaded";
 
     const unpload_preset = fields.upload_preset[0];
     console.log(unpload_preset);
-    const result = await uploadImage(files[0], unpload_preset);
-    if (!result) res.status(500).send("Server Error");
+// ##########added##########
+    const urls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file) {
+        const result = await uploadImage(file, unpload_preset);
+        if (result)
+          urls.push(result);
+        else
+          console.error(`Failed to upload image ${i + 1}`);
+      }
+    }
+    if(urls.length==0) res.status(500).send("Server Error");
+    res.status(200).send({ secure_url: JSON.stringify(urls) } as CloudinaryResponse);
+// ######old code
+    // const result = await uploadImage(files[0], unpload_preset);
+    // if (!result) res.status(500).send("Server Error");
 
-    res.status(200).send({ secure_url: result } as CloudinaryResponse);
+    // res.status(200).send({ secure_url: result } as CloudinaryResponse);
+
   } catch (err) {
     res.status(400).send(err);
   }

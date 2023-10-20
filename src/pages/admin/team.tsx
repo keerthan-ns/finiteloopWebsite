@@ -79,7 +79,7 @@ const AddCore: NextPage = () => {
     await addMember.mutateAsync(
       {
         name: name,
-        img: img,
+        img: img.replace(/[\[\]"]/g, ''),
         filter: filter,
         role: role,
         github: github,
@@ -274,7 +274,7 @@ const CoreMemberList: React.FC<CoreMemberListProps> = ({ members, filter }) => {
       {
         id: memid,
         name: name,
-        img: img,
+        img: img.replace(/[\[\]"]/g, ''),
         filter: filter,
         role: role,
         github: github,

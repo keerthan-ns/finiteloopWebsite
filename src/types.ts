@@ -121,6 +121,10 @@ export const addEventInput = z.object({
     "CodingContest",
   ]),
   image: z.string(),
+  // images: z.object({
+  //   url:z.string()
+  // }),
+  images: z.array(z.string()),
   organizer: z.string(),
   description: z.string(),
   filter: z.enum([
