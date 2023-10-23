@@ -18,7 +18,7 @@ const BlurImage: FunctionComponent<BlurImageProps> = (props) => {
     <Image
       {...props}
       alt={props.alt}
-      className={`${props.className as string} duration-700 ease-in-out ${
+      className={`${props.className as string} bg-[#0000007e] duration-700 ease-in-out ${
         isLoading
           ? "scale-110 blur-lg grayscale"
           : "scale-100 blur-0 grayscale-0"

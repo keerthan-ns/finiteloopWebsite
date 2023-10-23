@@ -78,7 +78,7 @@ const Modal: FunctionComponent<ModalProps> = ({
                 height={500}
                 width={500}
               /> */}
-              <ImageSlider images={images}/>
+              <ImageSlider images={images} height={500} width={500}/>
               <div className="flex flex-col gap-3 text-white">
                 <h2 className="heading text-lg font-medium lg:text-2xl">
                   {name}

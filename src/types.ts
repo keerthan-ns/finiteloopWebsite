@@ -140,6 +140,11 @@ export const editEventInput = addEventInput.extend({
   id: z.number(),
 });
 
+export const deleteEventImageInput = z.object({
+  id: z.number(),
+  source: z.string(),
+})
+
 // Certificate
 export const awardCertificateInput = z.object({
   userIds: z.array(z.string()), // Update to accept an array of user IDs
